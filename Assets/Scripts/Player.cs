@@ -17,12 +17,26 @@ public class Player : MonoBehaviour
     private float minDist, dist;
     private Transform item;
     private int minIdx;
+    public bool stunned;
+    private float t;
 
 
     private void OnTriggerEnter(Collider other)
     {
          Debug.Log(other.transform.name);
 
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.transform.tag == "Object")
+        {
+            Debug.Log("Hit");
+            if (collision.transform.GetComponent<Object>().thrown == true){
+                Debug.Log("Ouch");
+                stunned = true;
+            }
+        }
     }
 
 
@@ -35,6 +49,19 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (stunned)
+        {
+            Debug.Log(t);
+            if (t < 10)
+            {
+                t = t + Time.deltaTime*5;
+            }
+            else
+            {
+                t = 0;
+                stunned = false;
+            }
+        }
 
 
 
@@ -45,7 +72,7 @@ public class Player : MonoBehaviour
                 itemHolding.parent = null;
                 itemHolding.GetComponent<Rigidbody>().useGravity = true;
                 itemHolding.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-
+                itemHolding.GetComponent<Object>().thrown = true;
                 holding = false;
             }
             else
@@ -58,7 +85,7 @@ public class Player : MonoBehaviour
                 FindNearestItem();
 
                 itemHolding = itemColliders[minIdx].transform;
-                itemHolding.position = transform.position + transform.forward * offset;
+                itemHolding.position = cm.transform.position + cm.transform.forward * offset;
                 itemHolding.GetComponent<Rigidbody>().useGravity = false;
                 itemHolding.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
                 itemHolding.parent = cm.transform;
@@ -73,7 +100,8 @@ public class Player : MonoBehaviour
                 itemHolding.parent = null;
                 itemHolding.GetComponent<Rigidbody>().useGravity = true;
                 itemHolding.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-                itemHolding.GetComponent<Rigidbody>().AddForce(transform.forward*300);
+                itemHolding.GetComponent<Rigidbody>().AddForce(transform.forward*500);
+                itemHolding.GetComponent<Object>().thrown = true;
                 holding = false;
             }
         }
