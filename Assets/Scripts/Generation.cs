@@ -1,9 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
+
 public class Generation : MonoBehaviour {
-    public NavMeshSurface surface;
     [SerializeField] private int size = 10;
     [SerializeField] private GameObject empty;
     [SerializeField] private GameObject corridorCorner;
@@ -24,19 +23,17 @@ public class Generation : MonoBehaviour {
         criticalPath();
         nonCritical();
         deleteEmpty();
+        layoutRooms();
         populateRooms();
-        debugCritical();
-        redrawNavLayer();
+        //debugCritical();
     }
-    private void redrawNavLayer() {
-      surface.BuildNavMesh();
-    }
+
     private void debugCritical() {
         for(int i = 0; i < size; i++) {
             for(int j = 0; j < size; j++) {
                 if(rooms[i, j].GetComponent<Room>().getCritical()) {
                     Transform obj = rooms[i, j].transform.GetChild(0);
-
+                    
                     for(int num = 0; num < obj.childCount; num++) {
                         obj.GetChild(num).GetComponent<MeshRenderer>().material.color = Color.red;
                     }
@@ -51,6 +48,12 @@ public class Generation : MonoBehaviour {
                 if(!rooms[i, j].GetComponent<Room>().getAttached()) {
                     Destroy(rooms[i, j]);
                 }
+            }
+        }
+
+        for(int i = 0; i < size; i++) {
+            for(int j = 0; j < size; j++) {
+                MapManager.roomCentres.Add(rooms[i, j].transform.position);
             }
         }
     }
@@ -72,9 +75,10 @@ public class Generation : MonoBehaviour {
 
         //Start room
         rooms[i, j].GetComponent<Room>().setCritical(true);
+        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInitialPosition>().initialPos(new Vector3(i * -8.5f, 1.0f, 0.0f));
 
         int chosen = -1;
-
+       
         while(j < size) {
             Room currentRoom = rooms[i, j].GetComponent<Room>();
 
@@ -116,7 +120,7 @@ public class Generation : MonoBehaviour {
                     //Go down
                     chosen = -1;
                     j++;
-
+                    
                     if(j < size) {
                         currentRoom.down = true;
                         rooms[i, j].GetComponent<Room>().up = true;
@@ -178,6 +182,75 @@ public class Generation : MonoBehaviour {
 
             if(j < size) {
                 rooms[i, j].GetComponent<Room>().setCritical(true);
+            } else {
+                rooms[i, j - 1].GetComponent<Room>().goal = true;
+                rooms[i, j - 1].GetComponent<Room>().placeDiamond();
+            }
+        }
+    }
+
+    private void layoutRooms() {
+        for(int i = 0; i < size; i++) {
+            for(int j = 0; j < size; j++) {
+                if(rooms[i, j] != null) {
+                    Room room = rooms[i, j].GetComponent<Room>();
+                    int num = room.getAdjoining();
+                    bool left = room.left;
+                    bool right = room.right;
+                    bool up = room.up;
+                    bool down = room.down;
+                    bool opposite = (left && right) || (up && down);
+
+                    randomRoom(rooms[i, j].transform, num, opposite, rooms[i, j].GetComponent<Room>().goal);
+
+                    switch(num) {
+                        case 1:
+                            if(left) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                            } else if(right) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
+                            } else if(up) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                            } else if(down) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
+                            }
+
+                            break;
+                        case 2:
+                            if(opposite) {
+                                if(left)
+                                    room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                                else if(up)
+                                    room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                            } else {
+                                if(left) {
+                                    if(up)
+                                        room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                                    else
+                                        room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
+                                } else {
+                                    if(up)
+                                        room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                                    else
+                                        room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
+                                }
+                            }
+
+                            break;
+                        case 3:
+                            if(!down)
+                                room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                            else if(!left)
+                                room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                            else if(!up)
+                                room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
+                            else if(!right)
+                                room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
         }
     }
@@ -203,7 +276,7 @@ public class Generation : MonoBehaviour {
                             room.left = true;
                             compareRoom.right = true;
                             changing = true;
-                        } else if(compareRoom.connectable && compareRoom.getAttached() && Random.Range(0.0f, 1.0f) < 0.5f) {
+                        } else if(compareRoom.connectable && compareRoom.getAttached() && Random.Range(0.0f, 1.0f) < 0.35f) {
                             room.setAttached(true);
                             room.left = true;
                             compareRoom.right = true;
@@ -270,73 +343,18 @@ public class Generation : MonoBehaviour {
     private void populateRooms() {
         for(int i = 0; i < size; i++) {
             for(int j = 0; j < size; j++) {
-                if(rooms[i, j] != null) {
-                    Room room = rooms[i, j].GetComponent<Room>();
-                    int num = room.getAdjoining();
-                    bool left = room.left;
-                    bool right = room.right;
-                    bool up = room.up;
-                    bool down = room.down;
-                    bool opposite = (left && right) || (up && down);
-
-                    randomRoom(rooms[i, j].transform, num, opposite);
-
-                    switch(num) {
-                        case 1:
-                            if(left) {
-                                room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
-                            } else if(right) {
-                                room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
-                            } else if(up) {
-                                room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
-                            } else if(down) {
-                                room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
-                            }
-
-                            break;
-                        case 2:
-                            if(opposite) {
-                                if(left)
-                                    room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
-                                else if(up)
-                                    room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
-                            } else {
-                                if(left) {
-                                    if(up)
-                                        room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
-                                    else
-                                        room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
-                                } else {
-                                    if(up)
-                                        room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
-                                    else
-                                        room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
-                                }
-                            }
-
-                            break;
-                        case 3:
-                            if(!down)
-                                room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
-                            else if(!left)
-                                room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
-                            else if(!up)
-                                room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
-                            else if(!right)
-                                room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                if(rooms[i, j].GetComponent<Room>().getPopulate())
+                    rooms[i, j].GetComponent<Room>().populateRoom();
             }
         }
     }
 
-    private GameObject randomRoom(Transform parent, int num, bool opposite) {
+    private GameObject randomRoom(Transform parent, int num, bool opposite, bool goal) {
         float rand = Random.Range(0.0f, 1.0f);
 
-        if(rand < 0.33f) {
+        if(rand < 0.33f || goal) {
+            parent.GetComponent<Room>().setPopulate(true);
+
             //Room
             switch(num) {
                 case 1:
