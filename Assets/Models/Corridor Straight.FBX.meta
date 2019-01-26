@@ -1,62 +1,57 @@
 fileFormatVersion: 2
-guid: e242167fc18d02d4d907b9b86974ad24
+guid: b6cd3c0ac31ddcd46a376b2c09820c15
 ModelImporter:
   serializedVersion: 23
   fileIDToRecycleName:
-    100000: Arch1
+    100000: Arch006
     100002: Arch2
-    100004: //RootNode
-    100006: Floor1
-    100008: Wall1
-    100010: Wall2
-    100012: Wall3
-    100014: Wall4
-    100016: Wall5
-    100018: Wall6
-    100020: Wall7
-    400000: Arch1
+    100004: Floor002
+    100006: //RootNode
+    100008: Wall012
+    100010: Wall013
+    100012: Wall015
+    100014: Wall016
+    100016: Wall1
+    100018: Wall2
+    400000: Arch006
     400002: Arch2
-    400004: //RootNode
-    400006: Floor1
-    400008: Wall1
-    400010: Wall2
-    400012: Wall3
-    400014: Wall4
-    400016: Wall5
-    400018: Wall6
-    400020: Wall7
-    2100000: 01 - Default
-    2100002: No Name
-    2300000: Arch1
+    400004: Floor002
+    400006: //RootNode
+    400008: Wall012
+    400010: Wall013
+    400012: Wall015
+    400014: Wall016
+    400016: Wall1
+    400018: Wall2
+    2100000: No Name
+    2100002: 01 - Default
+    2300000: Arch006
     2300002: Arch2
-    2300004: Floor1
-    2300006: Wall1
-    2300008: Wall2
-    2300010: Wall3
-    2300012: Wall4
-    2300014: Wall5
-    2300016: Wall6
-    2300018: Wall7
-    3300000: Arch1
+    2300004: Floor002
+    2300006: Wall012
+    2300008: Wall013
+    2300010: Wall015
+    2300012: Wall016
+    2300014: Wall1
+    2300016: Wall2
+    3300000: Arch006
     3300002: Arch2
-    3300004: Floor1
-    3300006: Wall1
-    3300008: Wall2
-    3300010: Wall3
-    3300012: Wall4
-    3300014: Wall5
-    3300016: Wall6
-    3300018: Wall7
-    4300000: Wall1
-    4300002: Arch1
-    4300004: Arch2
-    4300006: Floor1
-    4300008: Wall4
-    4300010: Wall5
-    4300012: Wall3
-    4300014: Wall7
-    4300016: Wall6
-    4300018: Wall2
+    3300004: Floor002
+    3300006: Wall012
+    3300008: Wall013
+    3300010: Wall015
+    3300012: Wall016
+    3300014: Wall1
+    3300016: Wall2
+    4300000: Arch006
+    4300002: Floor002
+    4300004: Wall1
+    4300006: Wall012
+    4300008: Wall013
+    4300010: Wall015
+    4300012: Wall2
+    4300014: Arch2
+    4300016: Wall016
   externalObjects: {}
   materials:
     importMaterials: 1
@@ -88,7 +83,7 @@ ModelImporter:
     isReadable: 1
   meshes:
     lODScreenPercentages: []
-    globalScale: 1
+    globalScale: 1.3333334
     meshCompression: 0
     addColliders: 0
     useSRGBMaterialColor: 1

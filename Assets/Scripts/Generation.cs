@@ -3,71 +3,66 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Generation : MonoBehaviour {
-    private const int x = 4;
-    private const int y = 4;
-    [SerializeField] private GameObject[] setRooms;
+    private const int x = 5;
+    private const int y = 5;
+    [SerializeField] private GameObject empty;
+    [SerializeField] private GameObject corridorCorner;
+    [SerializeField] private GameObject corridorCross;
+    [SerializeField] private GameObject corridorStraight;
+    [SerializeField] private GameObject corridorT;
+    [SerializeField] private GameObject room1;
+    [SerializeField] private GameObject room2Corner;
+    [SerializeField] private GameObject room2Straight;
+    [SerializeField] private GameObject room3;
+    [SerializeField] private GameObject room4;
     private GameObject[,] rooms;
 
     private void Start() {
         rooms = new GameObject[x, y];
 
-        updateRooms();
+        createGrid();
         criticalPath();
-        createRooms();
+        nonCritical();
+        populateRooms();
+        debugCritical();
     }
 
-    private void createRooms() {
+    private void debugCritical() {
         for(int i = 0; i < x; i++) {
             for(int j = 0; j < y; j++) {
-                Room room = rooms[i, j].GetComponent<Room>();
-
-                int adjoining = 0;
-
-                if(room.left)
-                    adjoining++;
-
-                if(room.right)
-                    adjoining++;
-
-                if(room.up)
-                    adjoining++;
-
-                if(room.down)
-                    adjoining++;
-
-                switch(adjoining) {
-                    case 0:
-                        room.setColour(Color.black);
-                        break;
-                    case 1:
-                        room.setColour(Color.cyan);
-                        break;
-                    case 2:
-                        room.setColour(Color.green);
-                        break;
-                    case 3:
-                        room.setColour(Color.yellow);
-                        break;
-                    case 4:
-                        room.setColour(Color.red);
-                        break;
-                    default:
-                        break;
+                if(rooms[i, j].GetComponent<Room>().getCritical()) {
+                    Transform obj = rooms[i, j].transform.GetChild(0);
+                    
+                    for(int num = 0; num < obj.childCount; num++) {
+                        obj.GetChild(num).GetComponent<MeshRenderer>().material.color = Color.red;
+                    }
                 }
             }
         }
     }
 
-    private void criticalPath() {
-        int xx = Random.Range(0, x);
-        int yy = 0;
+    private void createGrid() {
+        //Place initial empty gameobjects in correct spots for rooms;
+        for(int i = 0; i < x; i++) {
+            for(int j = 0; j < y; j++) {
+                rooms[i, j] = Instantiate(empty, new Vector3(i * -7.5f, 1.75f, j * 7.5f), Quaternion.identity, transform);
+                rooms[i, j].transform.name = "(" + i + ", " + j + ")" ;
+            }
+        }
+    }
 
-        rooms[xx, yy].GetComponent<Room>().setCritical(true);
+    private void criticalPath() {
+        //Creating a path the player can definitely follow to traverse the house
+        int i = Random.Range(0, x);
+        int j = 0;
+
+        //Start room
+        rooms[i, j].GetComponent<Room>().setCritical(true);
 
         int chosen = -1;
        
-        while(yy < y) {
-            Room currentRoom = rooms[xx, yy].GetComponent<Room>();
+        while(j < y) {
+            Room currentRoom = rooms[i, j].GetComponent<Room>();
 
             if(chosen == -1) {
                 //Just reached level
@@ -75,42 +70,42 @@ public class Generation : MonoBehaviour {
 
                 if(dir < 0.4f) {
                     //Go left if possible
-                    if(xx > 0) {
+                    if(i > 0) {
                         //Left
                         chosen = 0;
-                        xx--;
+                        i--;
                         currentRoom.left = true;
-                        rooms[xx, yy].GetComponent<Room>().right = true;
+                        rooms[i, j].GetComponent<Room>().right = true;
                     } else {
                         //Right
                         chosen = 1;
-                        xx++;
+                        i++;
                         currentRoom.right = true;
-                        rooms[xx, yy].GetComponent<Room>().left = true;
+                        rooms[i, j].GetComponent<Room>().left = true;
                     }
                 } else if(dir < 0.8f) {
                     //Go right if possible
-                    if(xx < x - 1) {
+                    if(i < x - 1) {
                         //Right
                         chosen = 1;
-                        xx++;
+                        i++;
                         currentRoom.right = true;
-                        rooms[xx, yy].GetComponent<Room>().left = true;
+                        rooms[i, j].GetComponent<Room>().left = true;
                     } else {
                         //Left
                         chosen = 0;
-                        xx--;
+                        i--;
                         currentRoom.left = true;
-                        rooms[xx, yy].GetComponent<Room>().right = true;
+                        rooms[i, j].GetComponent<Room>().right = true;
                     }
                 } else {
                     //Go down
                     chosen = -1;
-                    yy++;
+                    j++;
                     
-                    if(yy < y) {
+                    if(j < y) {
                         currentRoom.down = true;
-                        rooms[xx, yy].GetComponent<Room>().up = true;
+                        rooms[i, j].GetComponent<Room>().up = true;
                     }
                 }
             } else {
@@ -120,64 +115,224 @@ public class Generation : MonoBehaviour {
                     //Continue same direction
                     if(chosen == 0) {
                         //Try left
-                        if(xx > 0) {
+                        if(i > 0) {
                             //Left
                             chosen = 0;
-                            xx--;
+                            i--;
                             currentRoom.left = true;
-                            rooms[xx, yy].GetComponent<Room>().right = true;
+                            rooms[i, j].GetComponent<Room>().right = true;
                         } else {
                             //Go down
                             chosen = -1;
-                            yy++;
+                            j++;
 
-                            if(yy < y) {
+                            if(j < y) {
                                 currentRoom.down = true;
-                                rooms[xx, yy].GetComponent<Room>().up = true;
+                                rooms[i, j].GetComponent<Room>().up = true;
                             }
                         }
                     } else {
                         //Try right
-                        if(xx < x - 1) {
+                        if(i < x - 1) {
                             //Right
                             chosen = 1;
-                            xx++;
+                            i++;
                             currentRoom.right = true;
-                            rooms[xx, yy].GetComponent<Room>().left = true;
+                            rooms[i, j].GetComponent<Room>().left = true;
                         } else {
                             //Go down
                             chosen = -1;
-                            yy++;
+                            j++;
 
-                            if(yy < y) {
+                            if(j < y) {
                                 currentRoom.down = true;
-                                rooms[xx, yy].GetComponent<Room>().up = true;
+                                rooms[i, j].GetComponent<Room>().up = true;
                             }
                         }
                     }
                 } else {
                     //Go down
                     chosen = -1;
-                    yy++;
+                    j++;
 
-                    if(yy < y) {
+                    if(j < y) {
                         currentRoom.down = true;
-                        rooms[xx, yy].GetComponent<Room>().up = true;
+                        rooms[i, j].GetComponent<Room>().up = true;
                     }
                 }
             }
 
-            if(yy < y) {
-                rooms[xx, yy].GetComponent<Room>().setCritical(true);
+            if(j < y) {
+                rooms[i, j].GetComponent<Room>().setCritical(true);
             }
         }
     }
 
-    private void updateRooms() {
-        for(int i = 0; i < x; i++) {
-            for(int j = 0; j < y; j++) {
-                rooms[i, j] = setRooms[i + (4 * j)];
+    private void nonCritical() {
+        bool changing = true;
+
+        while(changing) {
+            changing = false;
+
+            for(int i = 0; i < x; i++) {
+                for(int j = 0; j < y; j++) {
+                    Room room = rooms[i, j].GetComponent<Room>();
+
+                    if(!room.getCritical()) {
+                        if(i > 0) {
+                            if(rooms[i - 1, j].GetComponent<Room>().getAttached()) {
+                                if(!room.left) {
+                                    rooms[i - 1, j].GetComponent<Room>().right = true;
+                                    room.setAttached(true);
+                                    room.left = true;
+                                    changing = true;
+                                }
+                            }
+                        }
+
+                        if(i < x - 1) {
+                            if(rooms[i + 1, j].GetComponent<Room>().getAttached()) {
+                                if(!room.right) {
+                                    rooms[i + 1, j].GetComponent<Room>().left = true;
+                                    room.setAttached(true);
+                                    room.right = true;
+                                    changing = true;
+                                }
+                            }
+                        }
+
+                        if(j > 0) {
+                            if(rooms[i, j - 1].GetComponent<Room>().getAttached()) {
+                                if(!room.up) {
+                                    rooms[i, j - 1].GetComponent<Room>().down = true;
+                                    room.setAttached(true);
+                                    room.up = true;
+                                    changing = true;
+                                }
+                            }
+                        }
+
+                        if(j < y - 1) {
+                            if(rooms[i, j + 1].GetComponent<Room>().getAttached()) {
+                                if(!room.down) {
+                                    rooms[i, j + 1].GetComponent<Room>().up = true;
+                                    room.setAttached(true);
+                                    room.down = true;
+                                    changing = true;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private void populateRooms() {
+        for(int i = 0; i < x; i++) {
+            for(int j = 0; j < y; j++) {
+                if(rooms[i, j] != null) {
+                    Room room = rooms[i, j].GetComponent<Room>();
+                    int num = room.getAdjoining();
+                    bool left = room.left;
+                    bool right = room.right;
+                    bool up = room.up;
+                    bool down = room.down;
+                    bool opposite = (left && right) || (up && down);
+
+                    randomRoom(rooms[i, j].transform, num, opposite);
+
+                    switch(num) {
+                        case 1:
+                            if(left) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                            } else if(right) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
+                            } else if(up) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                            } else if(down) {
+                                room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
+                            }
+
+                            break;
+                        case 2:
+                            if(opposite) {
+                                if(left)
+                                    room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                                else if(up)
+                                    room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                            } else {
+                                if(left) {
+                                    if(up)
+                                        room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                                    else
+                                        room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
+                                } else {
+                                    if(up)
+                                        room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                                    else
+                                        room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
+                                }
+                            }
+
+                            break;
+                        case 3:
+                            if(!down)
+                                room.transform.eulerAngles = new Vector3(0.0f, 0.0f, 0.0f);
+                            else if(!left)
+                                room.transform.eulerAngles = new Vector3(0.0f, 90.0f, 0.0f);
+                            else if(!up)
+                                room.transform.eulerAngles = new Vector3(0.0f, 180.0f, 0.0f);
+                            else if(!right)
+                                room.transform.eulerAngles = new Vector3(0.0f, 270.0f, 0.0f);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    private GameObject randomRoom(Transform parent, int num, bool opposite) {
+        float rand = Random.Range(0.0f, 1.0f);
+
+        if(rand < 0.33f) {
+            //Room
+            switch(num) {
+                case 1:
+                    return Instantiate(room1, parent);
+                case 2:
+                    if(opposite)
+                        return Instantiate(room2Straight, parent);
+                    else
+                        return Instantiate(room2Corner, parent);
+                case 3:
+                    return Instantiate(room3, parent);
+                case 4:
+                    return Instantiate(room4, parent);
+                default:
+                    return null;
+            }
+        } else {
+            //Corridor
+            switch(num) {
+                case 1:
+                    //No corridor with one entrance
+                    return Instantiate(room1, parent);
+                case 2:
+                    if(opposite)
+                        return Instantiate(corridorStraight, parent);
+                    else
+                        return Instantiate(corridorCorner, parent);
+                case 3:
+                    return Instantiate(corridorT, parent);
+                case 4:
+                    return Instantiate(corridorCross, parent);
+                default:
+                    return null;
+            }
+        }
+
     }
 }
