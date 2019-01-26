@@ -5,6 +5,7 @@ using UnityEngine;
 public class Room : MonoBehaviour {
     private bool isAttached = false;
     private bool isCritical = false;
+    public bool connectable = true;
     public bool left;
     public bool right;
     public bool up;

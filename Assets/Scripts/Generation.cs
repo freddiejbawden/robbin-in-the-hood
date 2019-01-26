@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Generation : MonoBehaviour {
-    private const int x = 5;
-    private const int y = 5;
+    [SerializeField] private int size = 10;
     [SerializeField] private GameObject empty;
     [SerializeField] private GameObject corridorCorner;
     [SerializeField] private GameObject corridorCross;
@@ -18,18 +17,19 @@ public class Generation : MonoBehaviour {
     private GameObject[,] rooms;
 
     private void Start() {
-        rooms = new GameObject[x, y];
+        rooms = new GameObject[size, size];
 
         createGrid();
         criticalPath();
         nonCritical();
+        deleteEmpty();
         populateRooms();
         debugCritical();
     }
 
     private void debugCritical() {
-        for(int i = 0; i < x; i++) {
-            for(int j = 0; j < y; j++) {
+        for(int i = 0; i < size; i++) {
+            for(int j = 0; j < size; j++) {
                 if(rooms[i, j].GetComponent<Room>().getCritical()) {
                     Transform obj = rooms[i, j].transform.GetChild(0);
                     
@@ -41,11 +41,21 @@ public class Generation : MonoBehaviour {
         }
     }
 
+    private void deleteEmpty() {
+        for(int i = 0; i < size; i++) {
+            for(int j = 0; j < size; j++) {
+                if(!rooms[i, j].GetComponent<Room>().getAttached()) {
+                    Destroy(rooms[i, j]);
+                }
+            }
+        }
+    }
+
     private void createGrid() {
         //Place initial empty gameobjects in correct spots for rooms;
-        for(int i = 0; i < x; i++) {
-            for(int j = 0; j < y; j++) {
-                rooms[i, j] = Instantiate(empty, new Vector3(i * -7.5f, 1.75f, j * 7.5f), Quaternion.identity, transform);
+        for(int i = 0; i < size; i++) {
+            for(int j = 0; j < size; j++) {
+                rooms[i, j] = Instantiate(empty, new Vector3(i * -8.5f, 0.0f, j * 8.5f), Quaternion.identity, transform);
                 rooms[i, j].transform.name = "(" + i + ", " + j + ")" ;
             }
         }
@@ -53,7 +63,7 @@ public class Generation : MonoBehaviour {
 
     private void criticalPath() {
         //Creating a path the player can definitely follow to traverse the house
-        int i = Random.Range(0, x);
+        int i = Random.Range(0, size);
         int j = 0;
 
         //Start room
@@ -61,7 +71,7 @@ public class Generation : MonoBehaviour {
 
         int chosen = -1;
        
-        while(j < y) {
+        while(j < size) {
             Room currentRoom = rooms[i, j].GetComponent<Room>();
 
             if(chosen == -1) {
@@ -85,7 +95,7 @@ public class Generation : MonoBehaviour {
                     }
                 } else if(dir < 0.8f) {
                     //Go right if possible
-                    if(i < x - 1) {
+                    if(i < size - 1) {
                         //Right
                         chosen = 1;
                         i++;
@@ -103,7 +113,7 @@ public class Generation : MonoBehaviour {
                     chosen = -1;
                     j++;
                     
-                    if(j < y) {
+                    if(j < size) {
                         currentRoom.down = true;
                         rooms[i, j].GetComponent<Room>().up = true;
                     }
@@ -126,14 +136,14 @@ public class Generation : MonoBehaviour {
                             chosen = -1;
                             j++;
 
-                            if(j < y) {
+                            if(j < size) {
                                 currentRoom.down = true;
                                 rooms[i, j].GetComponent<Room>().up = true;
                             }
                         }
                     } else {
                         //Try right
-                        if(i < x - 1) {
+                        if(i < size - 1) {
                             //Right
                             chosen = 1;
                             i++;
@@ -144,7 +154,7 @@ public class Generation : MonoBehaviour {
                             chosen = -1;
                             j++;
 
-                            if(j < y) {
+                            if(j < size) {
                                 currentRoom.down = true;
                                 rooms[i, j].GetComponent<Room>().up = true;
                             }
@@ -155,14 +165,14 @@ public class Generation : MonoBehaviour {
                     chosen = -1;
                     j++;
 
-                    if(j < y) {
+                    if(j < size) {
                         currentRoom.down = true;
                         rooms[i, j].GetComponent<Room>().up = true;
                     }
                 }
             }
 
-            if(j < y) {
+            if(j < size) {
                 rooms[i, j].GetComponent<Room>().setCritical(true);
             }
         }
@@ -174,53 +184,78 @@ public class Generation : MonoBehaviour {
         while(changing) {
             changing = false;
 
-            for(int i = 0; i < x; i++) {
-                for(int j = 0; j < y; j++) {
+            for(int i = 0; i < size; i++) {
+                for(int j = 0; j < size; j++) {
                     Room room = rooms[i, j].GetComponent<Room>();
 
-                    if(!room.getCritical()) {
-                        if(i > 0) {
-                            if(rooms[i - 1, j].GetComponent<Room>().getAttached()) {
-                                if(!room.left) {
-                                    rooms[i - 1, j].GetComponent<Room>().right = true;
-                                    room.setAttached(true);
-                                    room.left = true;
-                                    changing = true;
-                                }
-                            }
-                        }
+                    if(room.getCritical())
+                        continue;
 
-                        if(i < x - 1) {
-                            if(rooms[i + 1, j].GetComponent<Room>().getAttached()) {
-                                if(!room.right) {
-                                    rooms[i + 1, j].GetComponent<Room>().left = true;
-                                    room.setAttached(true);
-                                    room.right = true;
-                                    changing = true;
-                                }
-                            }
-                        }
+                    if(i > 0 && !room.left) {
+                        Room compareRoom = rooms[i - 1, j].GetComponent<Room>();
 
-                        if(j > 0) {
-                            if(rooms[i, j - 1].GetComponent<Room>().getAttached()) {
-                                if(!room.up) {
-                                    rooms[i, j - 1].GetComponent<Room>().down = true;
-                                    room.setAttached(true);
-                                    room.up = true;
-                                    changing = true;
-                                }
-                            }
+                        if(compareRoom.getCritical() && Random.Range(0.0f, 1.0f) < 0.2f) {
+                            room.setAttached(true);
+                            room.left = true;
+                            compareRoom.right = true;
+                            changing = true;
+                        } else if(compareRoom.connectable && compareRoom.getAttached() && Random.Range(0.0f, 1.0f) < 0.5f) {
+                            room.setAttached(true);
+                            room.left = true;
+                            compareRoom.right = true;
+                            compareRoom.connectable = false;
+                            changing = true;
                         }
+                    }
 
-                        if(j < y - 1) {
-                            if(rooms[i, j + 1].GetComponent<Room>().getAttached()) {
-                                if(!room.down) {
-                                    rooms[i, j + 1].GetComponent<Room>().up = true;
-                                    room.setAttached(true);
-                                    room.down = true;
-                                    changing = true;
-                                }
-                            }
+                    if(i < size - 1 && !room.right) {
+                        Room compareRoom = rooms[i + 1, j].GetComponent<Room>();
+
+                        if(compareRoom.getCritical() && Random.Range(0.0f, 1.0f) < 0.2f) {
+                            room.setAttached(true);
+                            room.right = true;
+                            compareRoom.left = true;
+                            changing = true;
+                        } else if(compareRoom.connectable && compareRoom.getAttached() && Random.Range(0.0f, 1.0f) < 0.5f) {
+                            room.setAttached(true);
+                            room.right = true;
+                            compareRoom.left = true;
+                            compareRoom.connectable = false;
+                            changing = true;
+                        }
+                    }
+
+                    if(j > 0 && !room.up) {
+                        Room compareRoom = rooms[i, j - 1].GetComponent<Room>();
+
+                        if(compareRoom.getCritical() && Random.Range(0.0f, 1.0f) < 0.2f) {
+                            room.setAttached(true);
+                            room.up = true;
+                            compareRoom.down = true;
+                            changing = true;
+                        } else if(compareRoom.connectable && compareRoom.getAttached() && Random.Range(0.0f, 1.0f) < 0.5f) {
+                            room.setAttached(true);
+                            room.up = true;
+                            compareRoom.down = true;
+                            compareRoom.connectable = false;
+                            changing = true;
+                        }
+                    }
+
+                    if(j < size - 1 && !room.down) {
+                        Room compareRoom = rooms[i, j + 1].GetComponent<Room>();
+
+                        if(compareRoom.getCritical() && Random.Range(0.0f, 1.0f) < 0.2f) {
+                            room.setAttached(true);
+                            room.down = true;
+                            compareRoom.up = true;
+                            changing = true;
+                        } else if(compareRoom.connectable && compareRoom.getAttached() && Random.Range(0.0f, 1.0f) < 0.5f) {
+                            room.setAttached(true);
+                            room.down = true;
+                            compareRoom.up = true;
+                            compareRoom.connectable = false;
+                            changing = true;
                         }
                     }
                 }
@@ -229,8 +264,8 @@ public class Generation : MonoBehaviour {
     }
 
     private void populateRooms() {
-        for(int i = 0; i < x; i++) {
-            for(int j = 0; j < y; j++) {
+        for(int i = 0; i < size; i++) {
+            for(int j = 0; j < size; j++) {
                 if(rooms[i, j] != null) {
                     Room room = rooms[i, j].GetComponent<Room>();
                     int num = room.getAdjoining();
