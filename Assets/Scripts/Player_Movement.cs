@@ -25,8 +25,8 @@ public class Player_Movement : MonoBehaviour
     {
       if (!Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.E) && !RotateOnZAxis.resetPosition ) {
 
-        float deltaX = Input.GetAxis ("Horizontal") * speed;
-        float deltaZ = Input.GetAxis ("Vertical") * speed;
+        float deltaX = Input.GetAxis ("Horizontal") * speed * -1;
+        float deltaZ = Input.GetAxis ("Vertical") * speed * -1;
         Vector3 movement = new Vector3 (deltaX, 0, deltaZ);
         movement = Vector3.ClampMagnitude (movement, speed);
 
