@@ -34,6 +34,11 @@ public class Player_Movement : MonoBehaviour
         movement = transform.TransformDirection(movement);
         _charCount.Move (movement);
       }
+      if (Input.GetKey(KeyCode.LeftShift)) {
+        speed = 2;
+      } else {
+        speed = 4;
+      }
 
     }
 }

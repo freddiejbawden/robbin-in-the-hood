@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.AI;
 public class Generation : MonoBehaviour {
+    public NavMeshSurface surface;
     [SerializeField] private int size = 10;
     [SerializeField] private GameObject empty;
     [SerializeField] private GameObject corridorCorner;
@@ -25,14 +26,17 @@ public class Generation : MonoBehaviour {
         deleteEmpty();
         populateRooms();
         debugCritical();
+        redrawNavLayer();
     }
-
+    private void redrawNavLayer() {
+      surface.BuildNavMesh();
+    }
     private void debugCritical() {
         for(int i = 0; i < size; i++) {
             for(int j = 0; j < size; j++) {
                 if(rooms[i, j].GetComponent<Room>().getCritical()) {
                     Transform obj = rooms[i, j].transform.GetChild(0);
-                    
+
                     for(int num = 0; num < obj.childCount; num++) {
                         obj.GetChild(num).GetComponent<MeshRenderer>().material.color = Color.red;
                     }
@@ -70,7 +74,7 @@ public class Generation : MonoBehaviour {
         rooms[i, j].GetComponent<Room>().setCritical(true);
 
         int chosen = -1;
-       
+
         while(j < size) {
             Room currentRoom = rooms[i, j].GetComponent<Room>();
 
@@ -112,7 +116,7 @@ public class Generation : MonoBehaviour {
                     //Go down
                     chosen = -1;
                     j++;
-                    
+
                     if(j < size) {
                         currentRoom.down = true;
                         rooms[i, j].GetComponent<Room>().up = true;
